@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <mpi.h>
-#include <time.h>
-#include <string.h>
 
 #define ARR_SIZE 10
 
