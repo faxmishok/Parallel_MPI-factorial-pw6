@@ -2,42 +2,48 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <mpi.h>
-#include <time.h>
-#include <string.h>
 
 #define ARR_SIZE 10
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]){
 
-	int rank, code, tag = 100;
-	int arr[ARR_SIZE];
-    unsigned long long ans[] = { [0 ... 9] = 1 }; //init all elements to 1 to calc factorial
+    int block_length, rank, size, lower, upper;
+    int arr[ARR_SIZE];
+    unsigned long long int ans[] = { [0 ... 9] = 1 };
     double etime;
-	MPI_Status status; 
 
-	MPI_Init(&argc, &argv);
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	
-	if (rank == 0){
-		for (int i = 0; i < ARR_SIZE; i++) arr[i] = i+1;
-        etime = MPI_Wtime();
-        code = MPI_Send(arr, ARR_SIZE, MPI_INTEGER, 1, tag, MPI_COMM_WORLD);
-        code = MPI_Recv(ans, ARR_SIZE, MPI_LONG, 1, tag, MPI_COMM_WORLD, &status);
-        etime = MPI_Wtime() - etime;
-        printf("Elapsed time is %fs\n", etime);
-        for (int i = 0; i < ARR_SIZE ; i++)
-            printf("%d! = %llu\n", arr[i], ans[i]);
-	}
-	else if (rank == 1) {
-        code = MPI_Recv(arr, ARR_SIZE, MPI_INTEGER, 0, tag, MPI_COMM_WORLD, &status);
+    MPI_Init(&argc,&argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    block_length = ARR_SIZE / size;
+    int data[block_length];
+    // int *data = (int *) malloc(block_length * sizeof(int));
+    
+    // if (rank == 0) lower = 0;
+    // else           lower = (rank * block_length)+1;
+
+    // if (rank == (size-1)) upper = ARR_SIZE;
+    // else                  upper  = (rank+1) * block_length;
+
+    if (rank == 0) {
+        printf("Root process (P0) sending the array values: ");fflush(stdout);
         for (int i = 0; i < ARR_SIZE; i++) {
-            for (int j = 1; j <= arr[i]; ++j) {
-                ans[i] *= j;
-            }
+            arr[i] = i+1;
+            printf("%d,", arr[i]);fflush(stdout);
         }
-        code = MPI_Send(ans, ARR_SIZE, MPI_LONG, 0, tag, MPI_COMM_WORLD);
-	}
-	
-	MPI_Finalize();
-	return 0;
+        puts("");fflush(stdout);
+    }
+    MPI_Scatter(arr, block_length, MPI_INTEGER, data, block_length, MPI_INTEGER, 0, MPI_COMM_WORLD);
+   
+    printf("\nP%d is calculating...\n", rank);fflush(stdout);
+    for (int i = 0; i < block_length; i++) {
+        for (int j = 1; j <= data[i]; ++j) {
+            ans[i] *= j;
+        }
+        printf("%d! = %llu\n", data[i], ans[i]);fflush(stdout);
+    }
+
+    MPI_Finalize();
+    return 0;
 }
