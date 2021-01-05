@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <mpi.h>
 
 #define ARR_SIZE 10
 
 int main(int argc, char *argv[]){
 
-    int block_length, rank, size, lower, upper;
+    int block_length, rank, size;
     int arr[ARR_SIZE];
     unsigned long long int ans[] = { [0 ... 9] = 1 };
     double etime;
@@ -18,13 +17,6 @@ int main(int argc, char *argv[]){
 
     block_length = ARR_SIZE / size;
     int data[block_length];
-    // int *data = (int *) malloc(block_length * sizeof(int));
-    
-    // if (rank == 0) lower = 0;
-    // else           lower = (rank * block_length)+1;
-
-    // if (rank == (size-1)) upper = ARR_SIZE;
-    // else                  upper  = (rank+1) * block_length;
 
     if (rank == 0) {
         printf("Root process (P0) sending the array values: ");fflush(stdout);
